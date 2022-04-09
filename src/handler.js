@@ -1,26 +1,19 @@
-const { response } = require("@hapi/hapi/lib/validation");
 const { nanoid } = require("nanoid");
 const books = require('./books');
 
 const addBookHandler = (request, h) => {
-    const { name, year, author, summary, publisher, pageCount, readPage, } = request.payload;
-    const id = nanoid(16);
-    const insertedAt = new Date().toISOString();
-    const updatedAt = insertedAt;
-    const finished = readPage === pageCount ? true : false;
-
-    const newBook = {
-        name, year, author, summary, publisher, pageCount, readPage, reading, finished, id, insertedAt, updatedAt,
-    };
+    const { name, year, author, summary, publisher, pageCount, readPage, reading } = request.payload;
 
     if (name === undefined) {
         const response = h.response({
             status: 'fail',
             message: 'Gagal menambahkan buku. Mohon isi nama buku',
-        })
-        response.code(400);
+          });
+          response.code(400);
         return response;
-    } else if (readPage > pageCount) {
+    }
+    
+    if (readPage > pageCount) {
         const response = h.response({
             status: 'fail',
             message: 'Gagal menambahkan buku. readPage tidak boleh lebih besar dari pageCount',
@@ -29,7 +22,14 @@ const addBookHandler = (request, h) => {
         return response;
     }
 
+    const id = nanoid(16);
+    const insertedAt = new Date().toISOString();
+    const updatedAt = insertedAt;
+    const finished = readPage === pageCount ? true : false;
+
+    const newBook = { name, year, author, summary, publisher, pageCount, readPage, reading, finished, id, insertedAt, updatedAt };
     books.push(newBook);
+
     const isSuccess = books.filter((book) => book.id === id).length > 0;
 
     if (isSuccess) {
@@ -37,7 +37,7 @@ const addBookHandler = (request, h) => {
             status: 'success',
             message: 'Buku berhasil ditambahkan',
             data: {
-                noteId: id
+                bookId: id,
             }
         })
         response.code(201);
@@ -108,7 +108,7 @@ const editBookByIdHandler = (request, h) => {
     const { id } = request.params;
     const { name, year, author, summary, publisher, pageCount, readPage, reading, } = request.payload;
     const updatedAt = new Date().toISOString();
-    const index = books.filter((book) => book.id === id);
+    const index = books.findIndex((book) => book.id === id);
 
     if (index !== -1) {
         if (name === undefined) {
@@ -163,7 +163,7 @@ const editBookByIdHandler = (request, h) => {
 const deleteBookById = (request, h) => {
     const { id } = request.params;
 
-    const index = books.filter((book) => book.id === id);
+    const index = books.findIndex((book) => book.id === id);
 
     if (index !== -1) {
         books.splice(index, 1);
